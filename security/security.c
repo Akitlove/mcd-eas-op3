@@ -598,11 +598,11 @@ int security_inode_readlink(struct dentry *dentry)
 	return call_int_hook(inode_readlink, 0, dentry);
 }
 
-int security_inode_follow_link(struct dentry *dentry, struct nameidata *nd)
+int security_inode_follow_link(struct dentry *dentry)
 {
 	if (unlikely(IS_PRIVATE(dentry->d_inode)))
 		return 0;
-	return call_int_hook(inode_follow_link, 0, dentry);
+	return security_ops->inode_follow_link(dentry);
 }
 
 int security_inode_permission(struct inode *inode, int mask)
