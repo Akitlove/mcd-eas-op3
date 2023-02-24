@@ -1675,7 +1675,7 @@ static void do_cluster_freq_ctrl(long temp)
 				& BIT(_cpu)))
 				continue;
 
-		if (intelli_user_control > 0) {
+		        if (intelli_user_control > 0) {
 			if (mitigate) {
 				pr_info_ratelimited("Limiting CPU%d max frequency. Temp:%ld\n"
 					, _cpu
@@ -4893,7 +4893,7 @@ static int __ref set_enabled(const char *val, const struct kernel_param *kp)
 	if (*val == '0' || *val == 'n' || *val == 'N') {
 		intelli_enabled = 0;
 		interrupt_mode_init();
-		pr_info("%s: msm_thermal disabled!\n", KBUILD_MODNAME);
+	pr_info("%s: msm_thermal disabled!\n", KBUILD_MODNAME);
 	} else {
 		if (!intelli_enabled) {
 			intelli_enabled = 1;
@@ -4918,24 +4918,7 @@ static struct kernel_param_ops module_ops = {
 module_param_cb(intelli_enabled, &module_ops, &intelli_enabled, 0644);
 MODULE_PARM_DESC(intelli_enabled, "enforce thermal limit on cpu");
 
-/* Poll ms */
-module_param_named(poll_ms, msm_thermal_info.poll_ms, uint, 0664);
-
-/* Temp Threshold */
-module_param_named(temp_threshold, msm_thermal_info.limit_temp_degC,
-			int, 0664);
-module_param_named(core_limit_temp_degC, msm_thermal_info.core_limit_temp_degC,
-		   uint, 0664);
-module_param_named(hotplug_temp_degC, msm_thermal_info.hotplug_temp_degC,
-		   uint, 0664);
-module_param_named(freq_mitig_temp_degc,
-		   msm_thermal_info.freq_mitig_temp_degc, uint, 0644);
-
 /* Control Mask */
-module_param_named(freq_control_mask,
-		   msm_thermal_info.bootup_freq_control_mask, uint, 0644);
-module_param_named(core_control_mask, msm_thermal_info.core_control_mask,
-			uint, 0664);
 module_param_named(freq_mitig_control_mask,
 		   msm_thermal_info.freq_mitig_control_mask, uint, 0644);
 
@@ -7555,7 +7538,7 @@ fail:
 	if (ret)
 		pr_err("Failed reading node=%s, key=%s. err:%d\n",
 			node->full_name, key, ret);
-		pr_info("%s: msm_thermal_dev_probe failed!\n", KBUILD_MODNAME);
+		        pr_info("%s: msm_thermal_dev_probe failed!\n", KBUILD_MODNAME);
 probe_exit:
 	return ret;
 }
