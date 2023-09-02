@@ -188,7 +188,7 @@ static const int msm8996pro_mmss_fuse_ref_volt[MSM8996_MMSS_FUSE_CORNERS] = {
 	670000,
 	745000,
 	905000,
-	1250000,
+	1140000,
 };
 
 static const int msmcobalt_mmss_fuse_ref_volt[MSM8996_MMSS_FUSE_CORNERS] = {
