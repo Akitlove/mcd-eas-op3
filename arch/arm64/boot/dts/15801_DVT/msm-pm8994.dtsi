@@ -61,7 +61,7 @@
 				qcom,s2-type = <7>;
                                 /* endif */
 			};
-                        /* comment out by yangrujin@bsp 2015/10/15, config vol- key in other place* /
+                        /* comment out by yangrujin@bsp 2015/10/15, config vol- key in other place*/
 			/*qcom,pon_2 {
 				qcom,pon-type = <1>;
 				qcom,pull-up = <1>;
