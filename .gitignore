@@ -102,3 +102,6 @@ upload/
 
 
 build/Changelog\.txt
+
+# KSU
+drivers/kernelsu
