@@ -225,6 +225,7 @@
 
 /*------------------------------------------------------------------------*/
 
+#define PAGE_CACHE_SIZE PAGE_SIZE
 #define FSG_DRIVER_DESC		"Mass Storage Function"
 #define FSG_DRIVER_VERSION	"2009/09/11"
 
@@ -1328,6 +1329,7 @@ static int do_read_header(struct fsg_common *common, struct fsg_buffhd *bh)
 
 //Anderson@, 2016/09/21, CD-ROM and VID customized
 //add for cdrom suport MAC OSX
+
 static void _lba_to_msf(u8 *buf, int lba)
 {
 	lba += 150;
@@ -1335,20 +1337,17 @@ static void _lba_to_msf(u8 *buf, int lba)
 	buf[1] = (lba / 75) % 60;
 	buf[2] = lba % 75;
 }
-
-static int _read_toc_raw(struct fsg_common *common, struct fsg_buffhd *bh)
+static int _read_toc_raw(struct fsg_common *common,
+		struct fsg_buffhd *bh)
 {
-	struct fsg_lun	*curlun = common->curlun;
-	int		msf = common->cmnd[1] & 0x02;
-	u8		*buf = (u8 *) bh->buf;
-
+	struct fsg_lun *curlun = common->curlun;
+	u8 *buf = (u8 *) bh->buf;
 	u8 *q;
 	int len;
-
+	int msf = common->cmnd[1] & 0x02;
 	q = buf + 2;
 	*q++ = 1; /* first session */
 	*q++ = 1; /* last session */
-
 	*q++ = 1; /* session number */
 	*q++ = 0x14; /* data track */
 	*q++ = 0; /* track number */
@@ -1360,7 +1359,6 @@ static int _read_toc_raw(struct fsg_common *common, struct fsg_buffhd *bh)
 	*q++ = 1; /* first track */
 	*q++ = 0x00; /* disk type */
 	*q++ = 0x00;
-
 	*q++ = 1; /* session number */
 	*q++ = 0x14; /* data track */
 	*q++ = 0; /* track number */
@@ -1372,7 +1370,6 @@ static int _read_toc_raw(struct fsg_common *common, struct fsg_buffhd *bh)
 	*q++ = 1; /* last track */
 	*q++ = 0x00;
 	*q++ = 0x00;
-
 	*q++ = 1; /* session number */
 	*q++ = 0x14; /* data track */
 	*q++ = 0; /* track number */
@@ -1388,7 +1385,6 @@ static int _read_toc_raw(struct fsg_common *common, struct fsg_buffhd *bh)
 		put_unaligned_be32(curlun->num_sectors, q);
 		q += 4;
 	}
-
 	*q++ = 1; /* session number */
 	*q++ = 0x14; /* ADR, control */
 	*q++ = 0;    /* track number */
@@ -1406,13 +1402,10 @@ static int _read_toc_raw(struct fsg_common *common, struct fsg_buffhd *bh)
 		*q++ = 0;
 		*q++ = 0;
 	}
-
 	len = q - buf;
 	put_unaligned_be16(len - 2, buf);
-
 	return len;
 }
-
 static void cd_data_to_raw(u8 *buf, int lba)
 {
 	/* sync bytes */
@@ -1429,33 +1422,28 @@ static void cd_data_to_raw(u8 *buf, int lba)
 	/* XXX: ECC not computed */
 	memset(buf, 0, 288);
 }
-
 static int do_read_cd(struct fsg_common *common)
 {
-	struct fsg_lun		*curlun = common->curlun;
-	u32			lba;
-	struct fsg_buffhd	*bh;
-	int			rc;
-	u32			amount_left;
-	loff_t			file_offset, file_offset_tmp;
-	unsigned int		amount;
-	unsigned int		partial_page;
-	ssize_t			nread;
-
+	struct fsg_lun *curlun = common->curlun;
+	struct fsg_buffhd *bh;
+	int rc;
+	u32 lba;
+	u32 amount_left;
 	u32 nb_sectors, transfer_request;
-
+	loff_t file_offset, file_offset_tmp;
+	unsigned int amount;
+	unsigned int partial_page;
+	ssize_t nread;
 	nb_sectors = (common->cmnd[6] << 16) |
 			(common->cmnd[7] << 8) | common->cmnd[8];
 	lba = get_unaligned_be32(&common->cmnd[2]);
-
 	if (nb_sectors == 0)
 		return 0;
-
 	if (lba >= curlun->num_sectors) {
-		curlun->sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
+		curlun->sense_data =
+			SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 		return -EINVAL;
 	}
-
 	transfer_request = common->cmnd[9];
 	if ((transfer_request & 0xf8) == 0xf8) {
 		file_offset = ((loff_t) lba) << 11;
@@ -1466,20 +1454,19 @@ static int do_read_cd(struct fsg_common *common)
 		/* Carry out the file reads */
 		amount_left = common->data_size_from_cmnd;
 	}
-
 	if (unlikely(amount_left == 0))
-		return -EIO;		/* No default reply */
-
+		return -EIO; /* No default reply */
 	for (;;) {
-
-		/* Figure out how much we need to read:
+		/*
+		 * Figure out how much we need to read:
 		 * Try to read the remaining amount.
 		 * But don't read more than the buffer size.
 		 * And don't try to read past the end of the file.
 		 * Finally, if we're not at a page boundary, don't read past
 		 *	the next page.
 		 * If this means reading 0 then we were asked to read past
-		 *	the end of file. */
+		 * the end of file.
+		 */
 		amount = min(amount_left, FSG_BUFLEN);
 		amount = min((loff_t) amount,
 				curlun->file_length - file_offset);
@@ -1487,7 +1474,6 @@ static int do_read_cd(struct fsg_common *common)
 		if (partial_page > 0)
 			amount = min(amount, (unsigned int) PAGE_CACHE_SIZE -
 					partial_page);
-
 		/* Wait for the next buffer to become available */
 		bh = common->next_buffhd_to_fill;
 		while (bh->state != BUF_STATE_EMPTY) {
@@ -1495,9 +1481,10 @@ static int do_read_cd(struct fsg_common *common)
 			if (rc)
 				return rc;
 		}
-
-		/* If we were asked to read past the end of file,
-		 * end with an empty buffer. */
+		/*
+		 * If we were asked to read past the end of file,
+		 * end with an empty buffer.
+		 */
 		if (amount == 0) {
 			curlun->sense_data =
 				SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
@@ -1507,7 +1494,6 @@ static int do_read_cd(struct fsg_common *common)
 			bh->state = BUF_STATE_FULL;
 			break;
 		}
-
 		/* Perform the read */
 		file_offset_tmp = file_offset;
 		if ((transfer_request & 0xf8) == 0xf8) {
@@ -1524,7 +1510,6 @@ static int do_read_cd(struct fsg_common *common)
 				(int) nread);
 		if (signal_pending(current))
 			return -EINTR;
-
 		if (nread < 0) {
 			LDBG(curlun, "error in file read: %d\n",
 					(int) nread);
@@ -1539,7 +1524,6 @@ static int do_read_cd(struct fsg_common *common)
 		common->residue -= nread;
 		bh->inreq->length = nread;
 		bh->state = BUF_STATE_FULL;
-
 		/* If an error occurred, report it and its position */
 		if (nread < amount) {
 			curlun->sense_data = SS_UNRECOVERED_READ_ERROR;
@@ -1547,22 +1531,18 @@ static int do_read_cd(struct fsg_common *common)
 			curlun->info_valid = 1;
 			break;
 		}
-
 		if (amount_left == 0)
-			break;		/* No more left to read */
-
+			break; /* No more left to read */
 		/* Send this buffer and go read some more */
 		if (!start_in_transfer(common, bh))
-			/* Don't know what to do if common->fsg is NULL */
 			return -EIO;
 		common->next_buffhd_to_fill = bh->next;
 	}
-
 	if ((transfer_request & 0xf8) == 0xf8)
 		cd_data_to_raw(bh->buf, lba);
-
-	return -EIO;		/* No default reply */
+	return -EIO; /* No default reply */
 }
+
 //end add for cdrom suport MAC OSX
 
 static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
@@ -3890,6 +3870,8 @@ static struct config_group *fsg_lun_make(struct config_group *group,
 
 	memset(&config, 0, sizeof(config));
 	config.removable = true;
+	config.cdrom = true;
+	config.ro = true;
 
 	ret = fsg_common_create_lun(fsg_opts->common, &config, num, name,
 				    (const char **)&group->cg_item.ci_name);
