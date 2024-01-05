@@ -6203,6 +6203,7 @@ static __init int selinux_init(void)
 		selinux_enabled = 1;
 #else
 		selinux_enabled = 0;
+#endif
 		return 0;
 	}
 

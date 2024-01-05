@@ -1984,17 +1984,12 @@ static int graft_tree(struct mount *mnt, struct mount *p, struct mountpoint *mp)
 	if (mnt->mnt.mnt_sb->s_flags & MS_NOUSER)
 		return -EINVAL;
 
-<<<<<<< HEAD
-	if (S_ISDIR(mp->m_dentry->d_inode->i_mode) !=
-	      S_ISDIR(mnt->mnt.mnt_root->d_inode->i_mode))
-=======
 	if (d_is_dir(mp->m_dentry) !=
 #ifdef CONFIG_RKP_NS_PROT
 	      d_is_dir(mnt->mnt->mnt_root))
 #else
 	      d_is_dir(mnt->mnt.mnt_root))
 #endif
->>>>>>> 98791cf02e06 (VFS: (Scripted) Convert S_ISLNK/DIR/REG(dentry->d_inode) to d_is_*(dentry))
 		return -ENOTDIR;
 
 	return attach_recursive_mnt(mnt, p, mp, NULL);
