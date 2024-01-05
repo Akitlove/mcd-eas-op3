@@ -3742,21 +3742,45 @@ static int selinux_kernel_module_from_file(struct file *file)
 
 static int selinux_task_setpgid(struct task_struct *p, pid_t pgid)
 {
+#ifdef CONFIG_RKP_KDP
+	int rc;
+
+	if ((rc = security_integrity_current()))
+		return rc;
+#endif  /* CONFIG_RKP_KDP */
 	return current_has_perm(p, PROCESS__SETPGID);
 }
 
 static int selinux_task_getpgid(struct task_struct *p)
 {
+#ifdef CONFIG_RKP_KDP
+	int rc;
+
+	if ((rc = security_integrity_current()))
+		return rc;
+#endif  /* CONFIG_RKP_KDP */
 	return current_has_perm(p, PROCESS__GETPGID);
 }
 
 static int selinux_task_getsid(struct task_struct *p)
 {
+#ifdef CONFIG_RKP_KDP
+	int rc;
+
+	if ((rc = security_integrity_current()))
+		return rc;
+#endif  /* CONFIG_RKP_KDP */
 	return current_has_perm(p, PROCESS__GETSESSION);
 }
 
 static void selinux_task_getsecid(struct task_struct *p, u32 *secid)
 {
+#ifdef CONFIG_RKP_KDP
+	int rc;
+
+	if ((rc = security_integrity_current()))
+		return;
+#endif  /* CONFIG_RKP_KDP */
 	*secid = task_sid(p);
 }
 
@@ -6203,6 +6227,7 @@ static __init int selinux_init(void)
 		selinux_enabled = 1;
 #else
 		selinux_enabled = 0;
+#endif
 		return 0;
 	}
 
